@@ -1,0 +1,1161 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>3D 魔法手势圣诞树 - Premium WebGL Experience</title>
+    <!-- Tailwind CSS for UI Layout -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Font "Inter" & Festive Styles -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&family=Cinzel:wght@600;800&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background: radial-gradient(circle at center, #0a231c 0%, #030d0a 100%);
+            overflow: hidden;
+        }
+        .festive-title {
+            font-family: 'Cinzel', serif;
+            text-shadow: 0 0 20px rgba(212, 175, 55, 0.4);
+        }
+        /* Custom scrollbars for upload container */
+        ::-webkit-scrollbar {
+            width: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 10px;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: rgba(212, 175, 55, 0.3);
+            border-radius: 10px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: rgba(212, 175, 55, 0.6);
+        }
+    </style>
+</head>
+<body class="w-screen h-screen relative select-none text-white">
+
+    <!-- Background Cinematic Glow Canvas (Optional visual enhancers) -->
+    <div class="absolute inset-0 bg-cover bg-center pointer-events-none opacity-20 mix-blend-color-dodge z-0"></div>
+
+    <!-- Main Application UI -->
+    <div class="absolute inset-0 z-10 flex flex-col justify-between p-6 pointer-events-none">
+        
+        <!-- Header -->
+        <header class="flex justify-between items-start pointer-events-auto">
+            <div class="flex flex-col">
+                <h1 class="festive-title text-3xl md:text-4xl font-extrabold tracking-widest text-transparent bg-clip-text bg-gradient-to-r from-amber-200 via-yellow-400 to-amber-200">
+                    MERRY CHRISTMAS
+                </h1>
+                <p class="text-xs tracking-widest text-emerald-400/80 uppercase font-semibold mt-1">
+                    3D Gesture Interactive Experience • 智能手势互动
+                </p>
+            </div>
+            
+            <!-- Quick Status Badge -->
+            <div id="statusBadge" class="flex items-center gap-2 px-4 py-2 bg-emerald-950/40 border border-emerald-500/30 rounded-full backdrop-blur-md">
+                <span class="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse"></span>
+                <span id="statusText" class="text-xs font-semibold uppercase tracking-wider text-emerald-300">
+                    合拢态 (COLLAPSED)
+                </span>
+            </div>
+        </header>
+
+        <!-- Floating Dashboard Left: Gesture Reference / Control -->
+        <main class="flex flex-col md:flex-row gap-6 justify-between items-end w-full mt-auto">
+            <div class="flex flex-col gap-4 max-w-sm pointer-events-auto bg-black/40 border border-white/10 p-5 rounded-2xl backdrop-blur-xl shadow-2xl">
+                <h3 class="text-sm font-bold tracking-wider text-amber-300 uppercase flex items-center gap-2">
+                    <svg class="w-4 h-4 text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+                    手势指令参考 (GESTURE GUIDE)
+                </h3>
+                <div class="grid grid-cols-1 gap-2.5 text-xs text-slate-300">
+                    <div class="flex items-center gap-3 p-2 bg-white/5 rounded-lg border border-white/5 transition hover:bg-white/10">
+                        <span class="text-xl">✊</span>
+                        <div>
+                            <p class="font-semibold text-white">握拳 (Fist)</p>
+                            <p class="text-slate-400 text-[10px]">所有粒子与照片重新聚合成圣诞树锥体</p>
+                        </div>
+                    </div>
+                    <div class="flex items-center gap-3 p-2 bg-white/5 rounded-lg border border-white/5 transition hover:bg-white/10">
+                        <span class="text-xl">🖐️</span>
+                        <div>
+                            <p class="font-semibold text-white">五指张开 (Open Hand)</p>
+                            <p class="text-slate-400 text-[10px]">圣诞树爆散开来，在空中轻盈漂浮</p>
+                        </div>
+                    </div>
+                    <div class="flex items-center gap-3 p-2 bg-white/5 rounded-lg border border-white/5 transition hover:bg-white/10">
+                        <span class="text-xl">👌</span>
+                        <div>
+                            <p class="font-semibold text-white">拇指食指捏合 (Pinch over Photo)</p>
+                            <p class="text-slate-400 text-[10px]">捏住指引光斑覆盖的照片，可双向切换放大查看</p>
+                        </div>
+                    </div>
+                    <div class="flex items-center gap-3 p-2 bg-white/5 rounded-lg border border-white/5 transition hover:bg-white/10">
+                        <span class="text-xl">↩️</span>
+                        <div>
+                            <p class="font-semibold text-white">散开态下移动手部 (Move Hand)</p>
+                            <p class="text-slate-400 text-[10px]">根据你的手部旋转与位移，调整摄像机观测视角</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Floating Dashboard Center Right: Upload Panel & Camera PiP -->
+            <div class="flex flex-col sm:flex-row gap-4 items-stretch sm:items-end w-full md:w-auto pointer-events-auto">
+                <!-- Custom Photo Upload Dropzone -->
+                <div class="flex flex-col gap-3 bg-black/40 border border-white/10 p-5 rounded-2xl backdrop-blur-xl shadow-2xl min-w-[260px] max-w-sm">
+                    <h3 class="text-sm font-bold tracking-wider text-amber-300 uppercase flex items-center gap-2">
+                        <svg class="w-4 h-4 text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+                        照片云上传 (UPLOAD PHOTOS)
+                    </h3>
+                    <p class="text-[10px] text-slate-400 leading-relaxed">
+                        上传多张你与爱人的回忆照片，它们将作为璀璨照片云挂载在圣诞树或浮动于空中。
+                    </p>
+                    <label class="flex flex-col items-center justify-center py-4 px-3 border-2 border-dashed border-amber-500/30 hover:border-amber-400/80 bg-amber-500/5 hover:bg-amber-500/10 rounded-xl cursor-pointer transition duration-300">
+                        <span class="text-xs text-amber-300 font-semibold mb-1">选择/拖拽照片至此</span>
+                        <span class="text-[9px] text-slate-500">支持多张 JPG, PNG</span>
+                        <input id="imageUpload" type="file" multiple accept="image/*" class="hidden">
+                    </label>
+                    <div id="uploadCounter" class="text-[10px] text-slate-400 text-center">
+                        当前已载入: <span class="text-amber-300 font-bold" id="customPhotoCount">0</span> 张自定义照片
+                    </div>
+                </div>
+
+                <!-- PiP Video Container for Gesture tracking feedback -->
+                <div class="relative bg-black/60 border border-white/10 rounded-2xl shadow-2xl overflow-hidden backdrop-blur-md w-36 h-28 flex items-center justify-center">
+                    <div class="absolute inset-0 flex items-center justify-center text-[10px] text-slate-500 text-center px-2 z-0">
+                        正在加载相机...<br>请允许摄像头权限
+                    </div>
+                    <!-- Actual Video (Hidden) and skeleton canvas -->
+                    <video id="webcam" class="absolute inset-0 w-full h-full object-cover scale-x-[-1] opacity-0" autoplay playsinline muted></video>
+                    <canvas id="output_canvas" class="absolute inset-0 w-full h-full object-cover scale-x-[-1] z-10"></canvas>
+                    
+                    <div id="cameraStatus" class="absolute bottom-1 right-2 z-20 flex items-center gap-1 bg-black/70 px-1.5 py-0.5 rounded text-[8px] uppercase font-bold text-red-400">
+                        <span class="w-1.5 h-1.5 rounded-full bg-red-500 animate-ping"></span>
+                        TRACK OFF
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- WebGL ThreeJS Canvas Container -->
+    <div id="canvas-container" class="absolute inset-0 z-0"></div>
+
+    <!-- Notification Engine -->
+    <div id="toastContainer" class="absolute top-24 left-1/2 -translate-x-1/2 z-50 pointer-events-none flex flex-col gap-2"></div>
+
+    <!-- Load Three.js, OrbitControls and MediaPipe Hands -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+    
+    <!-- MediaPipe Script tags -->
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/hands/hands.js" crossorigin="anonymous"></script>
+
+    <script>
+        
+        // System Theme Config
+        const CONFIG = {
+            colors: {
+                matteGreen: 0x0f3424,
+                metallicGold: 0xe5a93c,
+                metallicRed: 0x9e1a1a,
+                white: 0xffffff,
+                softGold: 0xf3e5ab
+            },
+            treeHeight: 11,
+            treeRadius: 5.5,
+            itemCount: 160
+        };
+
+        // Application state machine
+        const APP_STATE = {
+            currentState: 'collapsed', // 'collapsed' | 'dispersed' | 'zoom'
+            zoomedElement: null,
+            handDetected: false,
+            pointerNDC: new THREE.Vector2(-999, -999), // Normalized Device Coordinates for raycasting
+            pointerPinchStrength: 0,
+            handTrackingEnabled: false,
+            customTextures: [] // Array to hold user-uploaded image textures
+        };
+
+        // Setup Three Scene
+        let scene, camera, renderer, clock, controls;
+        let elementsGroup; // Group containing all the tree/cloud particles & meshes
+        let starfield; // Floating gold dust system
+        let pointLight, directionalGold, directionalRed;
+        let pointerGlowMesh; // Golden star hovering on index finger
+        let raycaster, mouse;
+
+        // Custom default photo textures generated dynamically on Canvas
+        const defaultTextures = [];
+
+        // Track state variables for smooth transitions
+        const treeElements = []; // Store custom physics, transforms, types
+
+        // Notification Helper
+        function showToast(message, type = "info") {
+            const container = document.getElementById('toastContainer');
+            const toast = document.createElement('div');
+            toast.className = `px-5 py-2.5 rounded-xl border backdrop-blur-xl shadow-xl text-xs font-semibold tracking-wider text-center pointer-events-auto transition-all duration-300 opacity-0 transform translate-y-2 flex items-center gap-2`;
+            
+            if (type === "success") {
+                toast.className += ` bg-emerald-950/80 border-emerald-500/40 text-emerald-300`;
+                toast.innerHTML = `🌟 ${message}`;
+            } else if (type === "warning") {
+                toast.className += ` bg-amber-950/80 border-amber-500/40 text-amber-300`;
+                toast.innerHTML = `⚠️ ${message}`;
+            } else {
+                toast.className += ` bg-slate-900/90 border-slate-700/60 text-slate-200`;
+                toast.innerHTML = `💡 ${message}`;
+            }
+
+            container.appendChild(toast);
+            setTimeout(() => {
+                toast.classList.remove('opacity-0', 'translate-y-2');
+            }, 50);
+
+            setTimeout(() => {
+                toast.classList.add('opacity-0', 'translate-y--2');
+                setTimeout(() => toast.remove(), 300);
+            }, 4000);
+        }
+
+        window.onload = function() {
+            initProceduralTextures();
+            initThree();
+            buildTreeScene();
+            setupMediaPipe();
+            setupUpload();
+            animate();
+            
+            showToast("系统初始化完毕！默认处于合拢态 ✊", "success");
+            showToast("请开启摄像头获取炫酷的手势交互体验", "info");
+        };
+
+        function initProceduralTextures() {
+            const canvas = document.createElement('canvas');
+            canvas.width = 512;
+            canvas.height = 512;
+            const ctx = canvas.getContext('2d');
+
+            // Generator helper
+            const buildTexture = (drawFn) => {
+                ctx.clearRect(0, 0, 512, 512);
+                drawFn(ctx);
+                const tex = new THREE.CanvasTexture(canvas);
+                tex.needsUpdate = true;
+                return tex;
+            };
+
+            // Texture 1: Star on Royal Gold & Green Backing
+            const tex1 = buildTexture((c) => {
+                const grad = c.createRadialGradient(256, 256, 10, 256, 256, 256);
+                grad.addColorStop(0, '#154f30');
+                grad.addColorStop(1, '#082214');
+                c.fillStyle = grad;
+                c.fillRect(0, 0, 512, 512);
+                // Golden Border
+                c.strokeStyle = '#dfba5a';
+                c.lineWidth = 16;
+                c.strokeRect(16, 16, 480, 480);
+                // Gold star
+                c.fillStyle = '#e1b12c';
+                c.beginPath();
+                c.arc(256, 256, 100, 0, Math.PI * 2);
+                c.fill();
+                c.fillStyle = '#fbc531';
+                drawStar(c, 256, 256, 5, 80, 35);
+            });
+            defaultTextures.push(tex1);
+
+            // Texture 2: Elegant Golden Snowflake on Red Background
+            const tex2 = buildTexture((c) => {
+                const grad = c.createRadialGradient(256, 256, 10, 256, 256, 256);
+                grad.addColorStop(0, '#b31525');
+                grad.addColorStop(1, '#53060e');
+                c.fillStyle = grad;
+                c.fillRect(0, 0, 512, 512);
+                // Gold Snowflake
+                c.strokeStyle = '#dfba5a';
+                c.lineWidth = 20;
+                c.strokeRect(16, 16, 480, 480);
+                drawSnowflake(c, 256, 256, 120);
+            });
+            defaultTextures.push(tex2);
+
+            // Texture 3: Golden Deer Silhouette
+            const tex3 = buildTexture((c) => {
+                const grad = c.createRadialGradient(256, 256, 10, 256, 256, 256);
+                grad.addColorStop(0, '#103040');
+                grad.addColorStop(1, '#05121b');
+                c.fillStyle = grad;
+                c.fillRect(0, 0, 512, 512);
+                // Border
+                c.strokeStyle = '#dfba5a';
+                c.lineWidth = 20;
+                c.strokeRect(16, 16, 480, 480);
+                // Silhouette
+                c.fillStyle = '#dfba5a';
+                c.beginPath();
+                c.arc(256, 256, 110, 0, Math.PI * 2);
+                c.fill();
+                c.fillStyle = '#05121b';
+                drawMiniTree(c, 256, 256, 80);
+            });
+            defaultTextures.push(tex3);
+        }
+
+        // Star Drawing Utility
+        function drawStar(ctx, cx, cy, spikes, outerRadius, innerRadius) {
+            let rot = Math.PI / 2 * 3;
+            let x = cx;
+            let y = cy;
+            let step = Math.PI / spikes;
+
+            ctx.beginPath();
+            ctx.moveTo(cx, cy - outerRadius);
+            for (let i = 0; i < spikes; i++) {
+                x = cx + Math.cos(rot) * outerRadius;
+                y = cy + Math.sin(rot) * outerRadius;
+                ctx.lineTo(x, y);
+                rot += step;
+
+                x = cx + Math.cos(rot) * innerRadius;
+                y = cy + Math.sin(rot) * innerRadius;
+                ctx.lineTo(x, y);
+                rot += step;
+            }
+            ctx.lineTo(cx, cy - outerRadius);
+            ctx.closePath();
+            ctx.fillStyle = "#ffdf80";
+            ctx.fill();
+        }
+
+        // Minimalist Snowflake Drawing Utility
+        function drawSnowflake(ctx, cx, cy, size) {
+            ctx.strokeStyle = '#f5cd79';
+            ctx.lineWidth = 12;
+            ctx.lineCap = 'round';
+            for (let i = 0; i < 6; i++) {
+                ctx.beginPath();
+                ctx.moveTo(cx, cy);
+                const angle = (i * Math.PI) / 3;
+                const endX = cx + Math.cos(angle) * size;
+                const endY = cy + Math.sin(angle) * size;
+                ctx.lineTo(endX, endY);
+                ctx.stroke();
+
+                // Branchlets
+                const bSize = size * 0.4;
+                const midX = cx + Math.cos(angle) * (size * 0.5);
+                const midY = cy + Math.sin(angle) * (size * 0.5);
+                
+                ctx.beginPath();
+                ctx.moveTo(midX, midY);
+                ctx.lineTo(midX + Math.cos(angle + 1) * bSize, midY + Math.sin(angle + 1) * bSize);
+                ctx.moveTo(midX, midY);
+                ctx.lineTo(midX + Math.cos(angle - 1) * bSize, midY + Math.sin(angle - 1) * bSize);
+                ctx.stroke();
+            }
+        }
+
+        // Simple Geometric Christmas Tree
+        function drawMiniTree(ctx, cx, cy, height) {
+            ctx.fillStyle = '#0f3424';
+            ctx.beginPath();
+            ctx.moveTo(cx, cy - height * 0.6);
+            ctx.lineTo(cx - height * 0.4, cy + height * 0.4);
+            ctx.lineTo(cx + height * 0.4, cy + height * 0.4);
+            ctx.closePath();
+            ctx.fill();
+            // Trunk
+            ctx.fillStyle = '#3e2723';
+            ctx.fillRect(cx - 10, cy + height * 0.4, 20, height * 0.2);
+        }
+
+        function initThree() {
+            clock = new THREE.Clock();
+            raycaster = new THREE.Raycaster();
+            mouse = new THREE.Vector2();
+
+            const container = document.getElementById('canvas-container');
+            
+            // Create Scene
+            scene = new THREE.Scene();
+            scene.fog = new THREE.FogExp2(0x061812, 0.015);
+
+            // Setup Camera
+            camera = new THREE.PerspectiveCamera(50, window.innerWidth / window.innerHeight, 0.1, 1000);
+            camera.position.set(0, 3, 16);
+
+            // Create WebGL Renderer
+            renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true, powerPreference: "high-performance" });
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+            renderer.shadowMap.enabled = true;
+            renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+            renderer.toneMapping = THREE.ACESFilmicToneMapping;
+            renderer.toneMappingExposure = 1.1;
+            container.appendChild(renderer.domElement);
+
+            // Scene Lights
+            const ambient = new THREE.AmbientLight(0xffeedd, 0.3);
+            scene.add(ambient);
+
+            // Intense warm gold directional light (main key light)
+            directionalGold = new THREE.DirectionalLight(0xffe17d, 2.5);
+            directionalGold.position.set(10, 20, 10);
+            directionalGold.castShadow = true;
+            directionalGold.shadow.mapSize.width = 1024;
+            directionalGold.shadow.mapSize.height = 1024;
+            scene.add(directionalGold);
+
+            // Deep ruby red fill light
+            directionalRed = new THREE.DirectionalLight(0xc41e3a, 1.8);
+            directionalRed.position.set(-15, 5, -10);
+            scene.add(directionalRed);
+
+            // Interactive glowing pointer/index-star
+            const pointerGlowGeo = new THREE.SphereGeometry(0.2, 16, 16);
+            const pointerGlowMat = new THREE.MeshBasicMaterial({
+                color: 0xffd700,
+                transparent: true,
+                opacity: 0.9,
+                blending: THREE.AdditiveBlending
+            });
+            pointerGlowMesh = new THREE.Mesh(pointerGlowGeo, pointerGlowMat);
+            // Outer radiant ring
+            const ringGeo = new THREE.RingGeometry(0.35, 0.45, 32);
+            const ringMat = new THREE.MeshBasicMaterial({
+                color: 0xffa500,
+                side: THREE.DoubleSide,
+                transparent: true,
+                opacity: 0.7,
+                blending: THREE.AdditiveBlending
+            });
+            const outerRing = new THREE.Mesh(ringGeo, ringMat);
+            pointerGlowMesh.add(outerRing);
+            scene.add(pointerGlowMesh);
+
+            // Camera Standard Orbit Controls (Active when not hand-controlled)
+            controls = new THREE.OrbitControls(camera, renderer.domElement);
+            controls.enableDamping = true;
+            controls.dampingFactor = 0.05;
+            controls.maxPolarAngle = Math.PI / 2 + 0.1; // Don't go below ground
+            controls.minDistance = 5;
+            controls.maxDistance = 30;
+
+            // Handle Resizing
+            window.addEventListener('resize', onWindowResize, false);
+        }
+
+        function onWindowResize() {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        }
+
+        function buildTreeScene() {
+            elementsGroup = new THREE.Group();
+            scene.add(elementsGroup);
+
+            // Construct Tree Geometry Distribution
+            // Group will consist of Spheres (Baubles), Boxes (Presents), custom Striped Cylinders, and Image Cards
+            const numItems = CONFIG.itemCount;
+
+            // Pre-calculate positions to enable ultra-smooth state lerps
+            for (let i = 0; i < numItems; i++) {
+                const ratio = i / numItems; // 0 to 1 representing height distribution
+                
+                // --- 1. Collapsed State: Conical Golden Spiral Distribution ---
+                const currentHeight = (ratio - 0.4) * CONFIG.treeHeight; // distribution over y-axis
+                const currentMaxRadius = (1.0 - ratio) * CONFIG.treeRadius; // radius shrinks at top
+                
+                // Spiral path parameters
+                const theta = ratio * Math.PI * 18; // 9 turns
+                const noiseRadius = currentMaxRadius + (Math.random() - 0.5) * 0.25;
+                const xCone = Math.cos(theta) * noiseRadius;
+                const zCone = Math.sin(theta) * noiseRadius;
+                const yCone = currentHeight + (Math.random() - 0.5) * 0.15;
+
+                const collapsedPosition = new THREE.Vector3(xCone, yCone, zCone);
+                // Facing outer side of the tree
+                const collapsedRotation = new THREE.Euler(0, -theta + Math.PI/2, 0);
+
+                // --- 2. Dispersed State: Chaos Bubble ---
+                const rDispersed = 8 + Math.random() * 7;
+                const thetaDispersed = Math.random() * Math.PI * 2;
+                const phiDispersed = Math.acos((Math.random() * 2) - 1);
+                
+                const xDisp = rDispersed * Math.sin(phiDispersed) * Math.cos(thetaDispersed);
+                const yDisp = 2 + rDispersed * Math.cos(phiDispersed); // slightly higher center
+                const zDisp = rDispersed * Math.sin(phiDispersed) * Math.sin(thetaDispersed);
+                
+                const dispersedPosition = new THREE.Vector3(xDisp, yDisp, zDisp);
+                const dispersedRotation = new THREE.Euler(
+                    Math.random() * Math.PI,
+                    Math.random() * Math.PI,
+                    Math.random() * Math.PI
+                );
+
+                // --- Create physical object structures ---
+                const itemType = getItemType(ratio, i);
+                const mesh = createFestiveMesh(itemType, i);
+                elementsGroup.add(mesh);
+
+                // Setup scale configurations
+                const baseScale = mesh.scale.clone();
+
+                treeElements.push({
+                    mesh: mesh,
+                    type: itemType,
+                    index: i,
+                    collapsedPos: collapsedPosition,
+                    collapsedRot: collapsedRotation,
+                    dispersedPos: dispersedPosition,
+                    dispersedRot: dispersedRotation,
+                    originalScale: baseScale,
+                    driftOffset: Math.random() * Math.PI * 2,
+                    driftSpeed: 0.2 + Math.random() * 0.5
+                });
+            }
+
+            // --- 3. Generate Floating Gold Sparkle Dust Starfield ---
+            const starGeo = new THREE.BufferGeometry();
+            const starCount = 600;
+            const starPositions = new Float32Array(starCount * 3);
+            const starVelocities = [];
+
+            for (let i = 0; i < starCount; i++) {
+                starPositions[i*3] = (Math.random() - 0.5) * 35;
+                starPositions[i*3+1] = (Math.random() - 0.1) * 20;
+                starPositions[i*3+2] = (Math.random() - 0.5) * 35;
+
+                starVelocities.push(new THREE.Vector3(
+                    (Math.random() - 0.5) * 0.015,
+                    (Math.random() - 0.5) * 0.01,
+                    (Math.random() - 0.5) * 0.015
+                ));
+            }
+
+            starGeo.setAttribute('position', new THREE.BufferAttribute(starPositions, 3));
+            
+            // Generate radial dot texture programmatically
+            const sparkCanvas = document.createElement('canvas');
+            sparkCanvas.width = 32;
+            sparkCanvas.height = 32;
+            const sCtx = sparkCanvas.getContext('2d');
+            const sparkGrad = sCtx.createRadialGradient(16, 16, 0, 16, 16, 16);
+            sparkGrad.addColorStop(0, 'rgba(255, 235, 160, 1)');
+            sparkGrad.addColorStop(1, 'rgba(255, 235, 160, 0)');
+            sCtx.fillStyle = sparkGrad;
+            sCtx.fillRect(0, 0, 32, 32);
+            const sparkTexture = new THREE.CanvasTexture(sparkCanvas);
+
+            const starMaterial = new THREE.PointsMaterial({
+                color: 0xffffff,
+                size: 0.16,
+                transparent: true,
+                map: sparkTexture,
+                blending: THREE.AdditiveBlending,
+                depthWrite: false
+            });
+
+            starfield = new THREE.Points(starGeo, starMaterial);
+            scene.add(starfield);
+            starfield.userData = { velocities: starVelocities };
+        }
+
+        // Determine structure ratios for premium variety
+        function getItemType(ratio, index) {
+            if (ratio > 0.97) return 'treeStar'; // The tip star of the tree
+            
+            // Alternate types
+            const choice = index % 12;
+            if (choice === 0 || choice === 1 || choice === 2) {
+                return 'photo'; // 25% photos
+            } else if (choice === 3 || choice === 4 || choice === 5 || choice === 6) {
+                return 'baubleSphere'; // 33% spheres
+            } else if (choice === 7 || choice === 8 || choice === 9) {
+                return 'presentBox'; // 25% cubes
+            } else {
+                return 'candyCane'; // 17% candies
+            }
+        }
+
+        // Builder of Individual Beautiful Festive Geometries
+        function createFestiveMesh(type, idx) {
+            const containerGroup = new THREE.Group();
+
+            if (type === 'treeStar') {
+                // Large brilliant glowing tree top star
+                const starGeo = new THREE.DodecahedronGeometry(0.8, 1);
+                const starMat = new THREE.MeshStandardMaterial({
+                    color: CONFIG.colors.metallicGold,
+                    emissive: 0xcc9933,
+                    metalness: 0.95,
+                    roughness: 0.05
+                });
+                const m = new THREE.Mesh(starGeo, starMat);
+                containerGroup.add(m);
+                containerGroup.scale.set(1.4, 1.4, 1.4);
+
+            } else if (type === 'photo') {
+                // Elegant Double Sided Photo Card
+                // Gold back frame
+                const frameGeo = new THREE.BoxGeometry(1.6, 1.6, 0.08);
+                const frameMat = new THREE.MeshStandardMaterial({
+                    color: CONFIG.colors.metallicGold,
+                    metalness: 0.9,
+                    roughness: 0.15
+                });
+                const frameMesh = new THREE.Mesh(frameGeo, frameMat);
+                containerGroup.add(frameMesh);
+
+                // Frontend Canvas texture holder
+                const innerGeo = new THREE.PlaneGeometry(1.45, 1.45);
+                const selectTex = defaultTextures[idx % defaultTextures.length];
+                const photoMat = new THREE.MeshStandardMaterial({
+                    map: selectTex,
+                    side: THREE.DoubleSide,
+                    roughness: 0.25,
+                    metalness: 0.05
+                });
+                const photoMesh = new THREE.Mesh(innerGeo, photoMat);
+                photoMesh.position.z = 0.045; // slightly offset from backing frame
+                containerGroup.add(photoMesh);
+
+                // Store texture pointer for fast updates later
+                containerGroup.userData = { isPhoto: true, photoMesh: photoMesh };
+
+            } else if (type === 'baubleSphere') {
+                // Beautiful metallic shiny glass baubles
+                const sphereGeo = new THREE.SphereGeometry(0.42, 32, 16);
+                const colorOption = (idx % 2 === 0) ? CONFIG.colors.metallicRed : CONFIG.colors.metallicGold;
+                const sphereMat = new THREE.MeshStandardMaterial({
+                    color: colorOption,
+                    metalness: 0.95,
+                    roughness: 0.05,
+                    clearcoat: 1.0,
+                    clearcoatRoughness: 0.05
+                });
+                const sphereMesh = new THREE.Mesh(sphereGeo, sphereMat);
+                containerGroup.add(sphereMesh);
+
+                // Add small gold caps
+                const capGeo = new THREE.CylinderGeometry(0.12, 0.12, 0.15, 8);
+                const capMat = new THREE.MeshStandardMaterial({ color: CONFIG.colors.metallicGold, metalness: 0.9, roughness: 0.1 });
+                const cap = new THREE.Mesh(capGeo, capMat);
+                cap.position.y = 0.45;
+                containerGroup.add(cap);
+
+            } else if (type === 'presentBox') {
+                // Highly detailed gift box with beautiful golden ribbon
+                const boxGeo = new THREE.BoxGeometry(0.7, 0.7, 0.7);
+                const colorOption = (idx % 2 === 0) ? 0x0a4a25 : CONFIG.colors.metallicRed;
+                const boxMat = new THREE.MeshStandardMaterial({
+                    color: colorOption,
+                    metalness: 0.2,
+                    roughness: 0.35
+                });
+                const box = new THREE.Mesh(boxGeo, boxMat);
+                containerGroup.add(box);
+
+                // Ribbon wrap (simulated by thin intersecting boxes)
+                const ribbonMat = new THREE.MeshStandardMaterial({
+                    color: CONFIG.colors.metallicGold,
+                    metalness: 0.85,
+                    roughness: 0.1
+                });
+                const wrapH = new THREE.Mesh(new THREE.BoxGeometry(0.74, 0.12, 0.74), ribbonMat);
+                const wrapV = new THREE.Mesh(new THREE.BoxGeometry(0.12, 0.74, 0.74), ribbonMat);
+                containerGroup.add(wrapH);
+                containerGroup.add(wrapV);
+
+            } else if (type === 'candyCane') {
+                // Cylindrical Candy Cane with red-white stripes
+                const caneGeo = new THREE.CylinderGeometry(0.08, 0.08, 1.1, 12);
+                
+                // Procedural Stripe Texture
+                const caneCanvas = document.createElement('canvas');
+                caneCanvas.width = 64;
+                caneCanvas.height = 128;
+                const cCtx = caneCanvas.getContext('2d');
+                cCtx.fillStyle = '#ffffff';
+                cCtx.fillRect(0, 0, 64, 128);
+                cCtx.fillStyle = '#b31525';
+                cCtx.beginPath();
+                cCtx.moveTo(0, 0);
+                cCtx.lineTo(64, 64);
+                cCtx.lineTo(64, 96);
+                cCtx.lineTo(0, 32);
+                cCtx.closePath();
+                cCtx.fill();
+                cCtx.beginPath();
+                cCtx.moveTo(0, 80);
+                cCtx.lineTo(48, 128);
+                cCtx.lineTo(16, 128);
+                cCtx.lineTo(0, 112);
+                cCtx.closePath();
+                cCtx.fill();
+
+                const caneTex = new THREE.CanvasTexture(caneCanvas);
+                caneTex.wrapS = THREE.RepeatWrapping;
+                caneTex.wrapT = THREE.RepeatWrapping;
+                caneTex.repeat.set(1, 4);
+
+                const caneMat = new THREE.MeshStandardMaterial({
+                    map: caneTex,
+                    roughness: 0.15,
+                    metalness: 0.1
+                });
+                const caneMesh = new THREE.Mesh(caneGeo, caneMat);
+                caneMesh.rotation.z = Math.PI / 6;
+                containerGroup.add(caneMesh);
+            }
+
+            // Ensure shadows are enabled on all mesh elements
+            containerGroup.traverse(node => {
+                if (node.isMesh) {
+                    node.castShadow = true;
+                    node.receiveShadow = true;
+                }
+            });
+
+            return containerGroup;
+        }
+
+        function setupMediaPipe() {
+            const videoElement = document.getElementById('webcam');
+            const canvasElement = document.getElementById('output_canvas');
+            const canvasCtx = canvasElement.getContext('2d');
+            const statusText = document.getElementById('cameraStatus');
+
+            // Set fixed resolution parameters for canvas processing speeds
+            canvasElement.width = 360;
+            canvasElement.height = 280;
+
+            const hands = new Hands({
+                locateFile: (file) => `https://cdn.jsdelivr.net/npm/@mediapipe/hands/${file}`
+            });
+
+            hands.setOptions({
+                maxNumHands: 1,
+                modelComplexity: 1,
+                minDetectionConfidence: 0.65,
+                minTrackingConfidence: 0.65
+            });
+
+            hands.onResults((results) => {
+                // Clear overlay canvas
+                canvasCtx.save();
+                canvasCtx.clearRect(0, 0, canvasElement.width, canvasElement.height);
+
+                if (results.multiHandLandmarks && results.multiHandLandmarks.length > 0) {
+                    APP_STATE.handDetected = true;
+                    statusText.textContent = "TRACKING";
+                    statusText.className = "absolute bottom-1 right-2 z-20 flex items-center gap-1 bg-black/70 px-1.5 py-0.5 rounded text-[8px] uppercase font-bold text-emerald-400";
+                    
+                    const landmarks = results.multiHandLandmarks[0];
+
+                    // Draw MediaPipe skeleton in miniature PIP feedback
+                    drawSkeleton(canvasCtx, landmarks);
+
+                    // Process gestures and hand translations
+                    analyzeGestures(landmarks);
+
+                } else {
+                    APP_STATE.handDetected = false;
+                    statusText.textContent = "TRACK OFF";
+                    statusText.className = "absolute bottom-1 right-2 z-20 flex items-center gap-1 bg-black/70 px-1.5 py-0.5 rounded text-[8px] uppercase font-bold text-red-400";
+                    APP_STATE.pointerNDC.set(-999, -999); // Reset pointer out of viewport
+                }
+                canvasCtx.restore();
+            });
+
+            // Start webcam camera interface
+            const cameraHelper = new Camera(videoElement, {
+                onFrame: async () => {
+                    await hands.send({ image: videoElement });
+                },
+                width: 640,
+                height: 480
+            });
+
+            cameraHelper.start()
+                .then(() => {
+                    APP_STATE.handTrackingEnabled = true;
+                    showToast("摄像头连接成功！开始隔空指点吧", "success");
+                })
+                .catch(err => {
+                    console.warn("Camera failed: ", err);
+                    showToast("未能启用摄像头，您可以使用鼠标滚轮与拖拽进行交互", "warning");
+                });
+        }
+
+        // Draw Minimalist Aesthetic Hand Overlay on canvas
+        function drawSkeleton(ctx, landmarks) {
+            const width = ctx.canvas.width;
+            const height = ctx.canvas.height;
+
+            // Draw connections
+            const connections = [
+                [0,1],[1,2],[2,3],[3,4], // Thumb
+                [0,5],[5,6],[6,7],[7,8], // Index
+                [9,10],[10,11],[11,12],  // Middle (base 9 linked below)
+                [13,14],[14,15],[15,16], // Ring
+                [0,17],[17,18],[18,19],[19,20], // Pinky
+                [5,9],[9,13],[13,17] // Knuckles
+            ];
+
+            ctx.lineWidth = 2.5;
+            ctx.strokeStyle = 'rgba(212, 175, 55, 0.7)';
+            connections.forEach(([s, e]) => {
+                ctx.beginPath();
+                ctx.moveTo(landmarks[s].x * width, landmarks[s].y * height);
+                ctx.lineTo(landmarks[e].x * width, landmarks[e].y * height);
+                ctx.stroke();
+            });
+
+            // Draw points
+            ctx.fillStyle = '#ff4d4d';
+            for (let i = 0; i < landmarks.length; i++) {
+                // Golden core for tip and wrist, red for others
+                ctx.fillStyle = (i === 4 || i === 8 || i === 0) ? '#ffdf80' : '#ff3333';
+                ctx.beginPath();
+                ctx.arc(landmarks[i].x * width, landmarks[i].y * height, i === 8 ? 5.5 : 3.5, 0, Math.PI * 2);
+                ctx.fill();
+            }
+        }
+
+        function analyzeGestures(landmarks) {
+            // Distances utility helper
+            const getDistance = (p1, p2) => {
+                return Math.sqrt(Math.pow(p1.x - p2.x, 2) + Math.pow(p1.y - p2.y, 2) + Math.pow(p1.z - p2.z, 2));
+            };
+
+            // Calculate critical metrics
+            // MCP joints act as knuckle bases:
+            // Index MCP: 5, Middle MCP: 9, Ring MCP: 13, Pinky MCP: 17
+            // Tips: Index: 8, Middle: 12, Ring: 16, Pinky: 20
+            const indexFold = getDistance(landmarks[8], landmarks[5]);
+            const middleFold = getDistance(landmarks[12], landmarks[9]);
+            const ringFold = getDistance(landmarks[16], landmarks[13]);
+            const pinkyFold = getDistance(landmarks[20], landmarks[17]);
+
+            // Average tip extension to identify open hand / fist
+            const averageExtension = (indexFold + middleFold + ringFold + pinkyFold) / 4;
+
+            // Detect pinch strength between thumb tip (4) and index tip (8)
+            const pinchDist = getDistance(landmarks[4], landmarks[8]);
+
+            // 1. Detect Fist (合拢态)
+            // If average extension is very low, it indicates closed fingers (Fist)
+            if (averageExtension < 0.12) {
+                if (APP_STATE.currentState !== 'collapsed') {
+                    transitionState('collapsed');
+                }
+            } 
+            // 2. Detect Open Hand (散开态)
+            // If average extension is high and pinch is not active
+            else if (averageExtension > 0.25 && pinchDist > 0.11) {
+                if (APP_STATE.currentState === 'collapsed') {
+                    transitionState('dispersed');
+                } else if (APP_STATE.currentState === 'zoom' && pinchDist > 0.15) {
+                    // Release zoom state if hand is opened wide
+                    transitionState('dispersed');
+                }
+            }
+
+            // 3. Map Pointer Coordinates via Index Tip (Point 8)
+            // Convert MediaPipe space (0,1) with mirroring to WebGL NDC Device space (-1 to 1)
+            const ndcX = (1.0 - landmarks[8].x) * 2 - 1;
+            const ndcY = (1.0 - landmarks[8].y) * 2 - 1;
+            
+            // Soft interpolation for pointer coordinates to minimize webcam stutter/jitter
+            APP_STATE.pointerNDC.x += (ndcX - APP_STATE.pointerNDC.x) * 0.25;
+            APP_STATE.pointerNDC.y += (ndcY - APP_STATE.pointerNDC.y) * 0.25;
+
+            // 4. Pinch Trigger (捏合交互 - 进入照片放大模式)
+            // Very close distance threshold for Pinch trigger
+            if (pinchDist < 0.045 && APP_STATE.currentState !== 'collapsed') {
+                if (APP_STATE.pointerPinchStrength === 0) {
+                    // Lock state to prevent repetitive triggering
+                    APP_STATE.pointerPinchStrength = 1; 
+                    triggerPinchSelection();
+                }
+            } else if (pinchDist > 0.08) {
+                // Reset pinch trigger lock
+                APP_STATE.pointerPinchStrength = 0;
+            }
+
+            // 5. Orbiting Camera Control based on Hand position (only in dispersed state)
+            if (APP_STATE.currentState === 'dispersed') {
+                // Map coordinates relative to center
+                const handCenterX = (1.0 - landmarks[9].x) - 0.5; // range [-0.5, 0.5]
+                const handCenterY = (1.0 - landmarks[9].y) - 0.5;
+
+                // Dynamically offset controls target
+                const targetOrbitX = handCenterX * Math.PI * 4;
+                const targetOrbitY = 3 + (handCenterY * 8);
+
+                // Apply soft dynamic offsets to Three camera orbits
+                camera.position.x += (Math.sin(targetOrbitX) * 15 - camera.position.x) * 0.05;
+                camera.position.y += (targetOrbitY - camera.position.y) * 0.05;
+            }
+        }
+
+        // Global State Machine Manager
+        function transitionState(newState) {
+            const statusBadge = document.getElementById('statusBadge');
+            const statusText = document.getElementById('statusText');
+
+            APP_STATE.currentState = newState;
+            
+            if (newState === 'collapsed') {
+                // Turn on back orbit controls smoothly
+                controls.enabled = true;
+                APP_STATE.zoomedElement = null;
+
+                statusText.textContent = "合拢态 (COLLAPSED)";
+                statusBadge.className = "flex items-center gap-2 px-4 py-2 bg-emerald-950/40 border border-emerald-500/30 rounded-full backdrop-blur-md";
+                showToast("合并完成！粒子聚合为圣诞之树 ✊", "success");
+
+            } else if (newState === 'dispersed') {
+                controls.enabled = true;
+                APP_STATE.zoomedElement = null;
+
+                statusText.textContent = "散开态 (DISPERSED)";
+                statusBadge.className = "flex items-center gap-2 px-4 py-2 bg-amber-950/40 border border-amber-500/30 rounded-full backdrop-blur-md";
+                showToast("魔法爆裂！粒子化作满天星云 🖐️", "success");
+
+            } else if (newState === 'zoom') {
+                // Lock orbit controls so rotation doesn't disrupt viewing zoom
+                controls.enabled = false;
+
+                statusText.textContent = "回忆放大 (PHOTO FOCUS)";
+                statusBadge.className = "flex items-center gap-2 px-4 py-2 bg-rose-950/40 border border-rose-500/30 rounded-full backdrop-blur-md";
+            }
+        }
+
+        // Raycast and identify which photo card is selected under Index Finger
+        function triggerPinchSelection() {
+            // Project raycaster
+            raycaster.setFromCamera(APP_STATE.pointerNDC, camera);
+            
+            // Extract visual photo sub-meshes
+            const targetMeshes = treeElements
+                .filter(el => el.type === 'photo')
+                .map(el => el.mesh);
+
+            const intersects = raycaster.intersectObjects(targetMeshes, true);
+
+            if (intersects.length > 0) {
+                // Match intersection to master element object
+                let hitGroup = intersects[0].object;
+                while (hitGroup.parent && hitGroup !== scene) {
+                    const match = treeElements.find(el => el.mesh === hitGroup);
+                    if (match) {
+                        if (APP_STATE.currentState === 'zoom' && APP_STATE.zoomedElement === match) {
+                            // Already zoomed on this image - pinch again to collapse back
+                            transitionState('dispersed');
+                        } else {
+                            // Zoom into the photo
+                            APP_STATE.zoomedElement = match;
+                            transitionState('zoom');
+                            showToast("成功聚焦回忆照片 👌 在空中大幅展开", "success");
+                        }
+                        return;
+                    }
+                    hitGroup = hitGroup.parent;
+                }
+            } else {
+                if (APP_STATE.currentState === 'zoom') {
+                    // Pinching in empty space zooms back out
+                    transitionState('dispersed');
+                }
+            }
+        }
+
+        function setupUpload() {
+            const uploadInput = document.getElementById('imageUpload');
+            const counterText = document.getElementById('customPhotoCount');
+
+            uploadInput.addEventListener('change', (e) => {
+                const files = e.target.files;
+                if (!files || files.length === 0) return;
+
+                let loadedCount = 0;
+
+                Array.from(files).forEach(file => {
+                    const reader = new FileReader();
+                    reader.onload = function(event) {
+                        const img = new Image();
+                        img.onload = function() {
+                            const newTex = new THREE.Texture(img);
+                            newTex.needsUpdate = true;
+                            APP_STATE.customTextures.push(newTex);
+                            
+                            loadedCount++;
+                            if (loadedCount === files.length) {
+                                distributeNewPhotos();
+                            }
+                        };
+                        img.src = event.target.result;
+                    };
+                    reader.readAsDataURL(file);
+                });
+            });
+        }
+
+        // Apply newly uploaded image assets onto the existing photocloud meshes
+        function distributeNewPhotos() {
+            if (APP_STATE.customTextures.length === 0) return;
+
+            let photoIdx = 0;
+            treeElements.forEach(el => {
+                if (el.type === 'photo' && el.mesh.userData.photoMesh) {
+                    const sourceTexture = APP_STATE.customTextures[photoIdx % APP_STATE.customTextures.length];
+                    el.mesh.userData.photoMesh.material.map = sourceTexture;
+                    el.mesh.userData.photoMesh.material.needsUpdate = true;
+                    photoIdx++;
+                }
+            });
+
+            document.getElementById('customPhotoCount').textContent = APP_STATE.customTextures.length;
+            showToast(`成功应用了 ${APP_STATE.customTextures.length} 张自定义圣诞回忆照！`, "success");
+        }
+
+        function animate() {
+            requestAnimationFrame(animate);
+
+            const time = clock.getElapsedTime();
+            const lerpSpeed = 0.08; // high-quality responsive easing constant
+
+            // --- 1. Update Magic Finger Star coordinates ---
+            if (APP_STATE.handDetected && APP_STATE.pointerNDC.x !== -999) {
+                // Map screen coordinates back to 3D space near the focal depth
+                const pointer3D = new THREE.Vector3(APP_STATE.pointerNDC.x, APP_STATE.pointerNDC.y, 0.5);
+                pointer3D.unproject(camera);
+                
+                // Position pointer 6 units in front of the camera projection plane
+                const dir = pointer3D.sub(camera.position).normalize();
+                const targetPtrPos = camera.position.clone().add(dir.multiplyScalar(6));
+                
+                pointerGlowMesh.position.copy(targetPtrPos);
+                pointerGlowMesh.scale.set(1, 1, 1);
+                
+                // Add micro pulse effect based on time
+                const pulse = 1 + Math.sin(time * 12) * 0.15;
+                pointerGlowMesh.children[0].scale.set(pulse, pulse, pulse);
+            } else {
+                // Out of screen
+                pointerGlowMesh.scale.set(0.001, 0.001, 0.001);
+            }
+
+            // --- 2. Update Festive Particle Elements (State Interpolations) ---
+            treeElements.forEach(el => {
+                let targetPos = new THREE.Vector3();
+                let targetRot = new THREE.Euler();
+                let targetScale = el.originalScale.clone();
+
+                if (APP_STATE.currentState === 'collapsed') {
+                    // Pull back to tree geometry cone positions
+                    targetPos.copy(el.collapsedPos);
+                    targetRot.copy(el.collapsedRot);
+
+                } else if (APP_STATE.currentState === 'dispersed') {
+                    // Floating scatter drifting on noise parameters
+                    const driftAmplitude = 0.35;
+                    const driftX = Math.sin(time * el.driftSpeed + el.driftOffset) * driftAmplitude;
+                    const driftY = Math.cos(time * (el.driftSpeed * 0.8) + el.driftOffset) * driftAmplitude;
+                    const driftZ = Math.sin(time * (el.driftSpeed * 1.2) + el.driftOffset) * driftAmplitude;
+
+                    targetPos.copy(el.dispersedPos).add(new THREE.Vector3(driftX, driftY, driftZ));
+                    
+                    // Soft persistent tumbling spin
+                    targetRot.set(
+                        el.dispersedRot.x + time * 0.12,
+                        el.dispersedRot.y + time * 0.08,
+                        el.dispersedRot.z
+                    );
+
+                } else if (APP_STATE.currentState === 'zoom') {
+                    if (el === APP_STATE.zoomedElement) {
+                        // Position exactly in front of the camera viewpoint
+                        const camDirection = new THREE.Vector3(0, 0, -3.8); // 3.8 units out
+                        camDirection.applyQuaternion(camera.quaternion);
+                        targetPos.copy(camera.position).add(camDirection);
+
+                        // Rotate flat facing camera
+                        targetRot.copy(camera.rotation);
+                        // Scale up the card for immersive review
+                        targetScale.multiplyScalar(2.6);
+                    } else {
+                        // Fade out / scale down background elements out of focus
+                        const driftAmplitude = 0.2;
+                        const driftX = Math.sin(time * 0.5 + el.driftOffset) * driftAmplitude;
+                        const driftY = Math.cos(time * 0.4 + el.driftOffset) * driftAmplitude;
+                        const driftZ = Math.sin(time * 0.6 + el.driftOffset) * driftAmplitude;
+
+                        targetPos.copy(el.dispersedPos).add(new THREE.Vector3(driftX, driftY, driftZ));
+                        targetRot.copy(el.dispersedRot);
+                        
+                        targetScale.multiplyScalar(0.35); // Shrink background objects
+                    }
+                }
+
+                // Interpolate Transform Values Smoothly
+                el.mesh.position.lerp(targetPos, lerpSpeed);
+                el.mesh.scale.lerp(targetScale, lerpSpeed);
+
+                // Use Slerp (Spherical Linear Interpolation) for rotational quaternions
+                const targetQuaternion = new THREE.Quaternion().setFromEuler(targetRot);
+                el.mesh.quaternion.slerp(targetQuaternion, lerpSpeed);
+            });
+
+            // --- 3. Animate Starfield Particles ---
+            if (starfield) {
+                const positions = starfield.geometry.attributes.position.array;
+                const velocities = starfield.userData.velocities;
+                
+                for (let i = 0; i < velocities.length; i++) {
+                    positions[i * 3] += velocities[i].x;
+                    positions[i * 3 + 1] += velocities[i].y;
+                    positions[i * 3 + 2] += velocities[i].z;
+
+                    // Micro wind boundaries
+                    if (Math.abs(positions[i * 3]) > 25) velocities[i].x *= -1;
+                    if (positions[i * 3 + 1] < -2 || positions[i * 3 + 1] > 22) velocities[i].y *= -1;
+                    if (Math.abs(positions[i * 3 + 2]) > 25) velocities[i].z *= -1;
+                }
+                starfield.geometry.attributes.position.needsUpdate = true;
+                
+                // Slow rotation on system
+                starfield.rotation.y += 0.0008;
+            }
+
+            // Slowly orbit cameras slightly if hand tracking is inactive
+            if (!APP_STATE.handDetected && APP_STATE.currentState === 'collapsed') {
+                const slowTime = time * 0.15;
+                camera.position.x = Math.sin(slowTime) * 16;
+                camera.position.z = Math.cos(slowTime) * 16;
+                camera.position.y = 4.5 + Math.sin(slowTime * 0.5) * 2;
+                camera.lookAt(0, 3, 0);
+            }
+
+            // Update Orbit Control
+            if (controls && controls.enabled) {
+                controls.update();
+            }
+
+            // Render Frame
+            renderer.render(scene, camera);
+        }
+    </script>
+</body>
+</html>
